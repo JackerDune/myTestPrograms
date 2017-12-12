@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root>
+	<app_para_conf>
+		<!-- Start CoreId Of DatePlane -->
+		<DplaneStartCoreId>10000</DplaneStartCoreId>
+	</app_para_conf>
+</root>
