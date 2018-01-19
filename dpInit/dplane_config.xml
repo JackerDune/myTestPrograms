@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="UTF-8"?>
+
+<root>
+	<Module>
+		<ModuleName>WebUIModule</ModuleName>
+		<Function>1</Function>
+		<Object>
+			<ObjectId>0</ObjectId>
+			<ObjectName>WebObjWEBUI</ObjectName>
+			<Function>1</Function>
+			<Value>1|2|3</Value>	
+		</Object>	
+	</Module>
+	<Module>
+		<!-- Dplane Init Module Information AppModule-->
+		<!-- Function : 0=off,1=on,2=remote app ... -->
+		<!-- Value : low|middle|high hardware platform specification -->
+		<ModuleName>AppModule</ModuleName>
+		<Function>0</Function>
+		<Object>
+			<ObjectId>0</ObjectId>
+			<ObjectName>AppObjAV</ObjectName>
+			<Function>0</Function>
+			<Value>1|2|3</Value>	
+		</Object>	
+		<Object>
+			<ObjectId>1</ObjectId>
+			<ObjectName>AppObjIPS</ObjectName>
+			<Function>0</Function>
+			<Value>1|2|3</Value>	
+		</Object>	
+		<Object>
+			<ObjectId>2</ObjectId>
+			<ObjectName>AppObjSAAE</ObjectName>
+			<Function>0</Function>
+			<Value>1|2|3</Value>	
+		</Object>	
+	</Module>
+	<Module>
+		<!-- Dplane Init Module Information DeviceModule-->
+		<ModuleName>DeviceModule</ModuleName>
+		<Function>1</Function>
+		<Object>
+			<ObjectId>0</ObjectId>
+			<ObjectName>DeviceObjDev</ObjectName>
+			<Function>1</Function>
+			<Value>512|1024|2048|0</Value>	
+		</Object>	
+	</Module>
+	<Module>
+		<!-- Dplane Init Module Information ConntrackModule-->
+		<ModuleName>ConntrackModule</ModuleName>
+		<Function>1</Function>
+		<Object>
+			<ObjectId>0</ObjectId>
+			<ObjectName>ConntrackObjHashSpec</ObjectName>
+			<Function>1</Function>
+			<Value>10240|51240|102400|0</Value>	
+		</Object>	
+		<Object>
+			<ObjectId>1</ObjectId>
+			<ObjectName>ConntrackObjRsvCT</ObjectName>
+			<Function>1</Function>
+			<Value>40960|51240|102400|0</Value>	
+		</Object>	
+	</Module>
+</root>
