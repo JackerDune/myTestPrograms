@@ -136,43 +136,43 @@ static int32_t free_xml_item(int argc, ...)
 }
 
 typedef enum {
-	DP_INIT_MODULE_ID_WEB,
-	DP_INIT_MODULE_ID_APP,
-	DP_INIT_MODULE_ID_DEVICE,
-	DP_INIT_MODULE_ID_CONNTRACK,
-	DP_INIT_MODULE_MAX
-}DP_INIT_MODULE;
+	INIT_MODULE_ID_WEB,
+	INIT_MODULE_ID_APP,
+	INIT_MODULE_ID_DEVICE,
+	INIT_MODULE_ID_CONNTRACK,
+	INIT_MODULE_MAX
+}INIT_MODULE;
 
-#define DP_MODULE_NAME_LEN 32
-#define DP_MODULE_MAX_OBJECT_NUM 16
+#define MODULE_NAME_LEN 32
+#define MODULE_MAX_OBJECT_NUM 16
 
-//DP_INIT_MODULE_WEB
+//INIT_MODULE_WEB
 typedef enum {
-	DP_WEB_MODULE_OBJ_WEBUI,
-	DP_WEB_MODULE_OBJ_MAX = DP_MODULE_MAX_OBJECT_NUM,
-}DP_WEB_MODULE_OBJECT;
+	WEB_MODULE_OBJ_WEBUI,
+	WEB_MODULE_OBJ_MAX = MODULE_MAX_OBJECT_NUM,
+}WEB_MODULE_OBJECT;
 
-//DP_INIT_MODULE_ID_APP
+//INIT_MODULE_ID_APP
 typedef enum {
-	DP_APP_MODULE_OBJ_AV,
-	DP_APP_MODULE_OBJ_IPS,
-	DP_APP_MODULE_OBJ_SAAE,
-	DP_APP_MODULE_OBJ_MAX = DP_MODULE_MAX_OBJECT_NUM,
-}DP_APP_MODULE_OBJECT;
+	APP_MODULE_OBJ_AV,
+	APP_MODULE_OBJ_IPS,
+	APP_MODULE_OBJ_SAAE,
+	APP_MODULE_OBJ_MAX = MODULE_MAX_OBJECT_NUM,
+}APP_MODULE_OBJECT;
 
-//DP_INIT_MODULE_ID_DEVICE
+//INIT_MODULE_ID_DEVICE
 typedef enum {
-	DP_DEV_MODULE_OBJ_DEVICE,
-	DP_DEV_MODULE_OBJ_MAX = DP_MODULE_MAX_OBJECT_NUM,
-}DP_DEVICE_MODULE_OBJECT;
+	DEV_MODULE_OBJ_DEVICE,
+	DEV_MODULE_OBJ_MAX = MODULE_MAX_OBJECT_NUM,
+}DEVICE_MODULE_OBJECT;
 
 
-//DP_INIT_MODULE_ID_CONNTRACK
+//INIT_MODULE_ID_CONNTRACK
 typedef enum {
-	DP_CT_MODULE_OBJ_HASHNUM,
-	DP_CT_MODULE_OBJ_RESERVE_CT,
-	DP_CT_MODULE_OBJ_MAX = DP_MODULE_MAX_OBJECT_NUM
-}DP_CONNTRACK_MODULE_OBJECT;
+	CT_MODULE_OBJ_HASHNUM,
+	CT_MODULE_OBJ_RESERVE_CT,
+	CT_MODULE_OBJ_MAX = MODULE_MAX_OBJECT_NUM
+}CONNTRACK_MODULE_OBJECT;
 
 enum {
 	HW_PLATFORM_LOW,
@@ -193,15 +193,15 @@ struct ObjectInfo {
 };
 
 struct dpModuleObject {
-	char ObjectName[DP_MODULE_NAME_LEN];
+	char ObjectName[MODULE_NAME_LEN];
 	struct ElementInfo ObjectFunction;
 	struct ObjectInfo ObjectValue;
 };
 
 struct dpInitModule {
-	char ModuleName[DP_MODULE_NAME_LEN];
+	char ModuleName[MODULE_NAME_LEN];
 	struct ElementInfo ModuleFunction;
-	struct dpModuleObject dpModuleObj[DP_MODULE_MAX_OBJECT_NUM];
+	struct dpModuleObject dpModuleObj[MODULE_MAX_OBJECT_NUM];
 };
 
 enum {
@@ -214,107 +214,114 @@ enum {
 	[modid] = \
 	{\
 		.ModuleName = (modname),\
-		.ModuleFunction.ElementInfoInCfgFile = "Function",\
-		.ModuleFunction.ElementValue = modfuncvalue
+		.ModuleFunction = \
+		{\
+			.ElementInfoInCfgFile = "Function",\
+			.ElementValue = modfuncvalue,\
+		}
 
 #define OBJECT_INIT(objid, objname, objfuncvalue, objlowvalue, objmidvalue, objhighvalue, objvmvalue) \
 		.dpModuleObj[objid] = \
 		{ \
 			.ObjectName = (objname), \
-			.ObjectFunction.ElementInfoInCfgFile = "Function",\
-			.ObjectFunction.ElementValue = objfuncvalue,\
-			.ObjectValue.ObjectInfoInCfgFile= "value",\
-			.ObjectValue.ObjectValue[HW_PLATFORM_LOW] = objlowvalue,\
-			.ObjectValue.ObjectValue[HW_PLATFORM_MIDDLE] = objmidvalue,\
-			.ObjectValue.ObjectValue[HW_PLATFORM_HIGH] = objhighvalue,\
-			.ObjectValue.ObjectValue[VM_PLATFORM] = objvmvalue,\
+			.ObjectFunction = {\
+				.ElementInfoInCfgFile = "Function",\
+				.ElementValue = objfuncvalue,\
+			},\
+			.ObjectValue= { \
+				.ObjectInfoInCfgFile= "value",\
+			    .ObjectValue[HW_PLATFORM_LOW] = objlowvalue,\
+			    .ObjectValue[HW_PLATFORM_MIDDLE] = objmidvalue,\
+			    .ObjectValue[HW_PLATFORM_HIGH] = objhighvalue,\
+			    .ObjectValue[VM_PLATFORM] = objvmvalue,\
+			},\
 		}
 
 #define MODULE_INIT_END(modid)\
 	}
 
 
-struct dpInitModule g_dp_init_module[DP_INIT_MODULE_MAX] = 
+struct dpInitModule g_dp_init_module[INIT_MODULE_MAX] = 
 {
 	//WEBUI MODULE
-	MODULE_INIT_BEGIN(DP_INIT_MODULE_ID_WEB, "WebModule", FUNCTION_ON),
-		OBJECT_INIT(DP_WEB_MODULE_OBJ_WEBUI, "WebObjWEBUI", FUNCTION_ON, 100, 100, 100, 100),
-	MODULE_INIT_END(DP_INIT_MODULE_ID_WEB),
+	MODULE_INIT_BEGIN(INIT_MODULE_ID_WEB, "WebModule", FUNCTION_ON),
+		OBJECT_INIT(WEB_MODULE_OBJ_WEBUI, "WebObjWEBUI", FUNCTION_ON, 100, 100, 100, 100),
+	MODULE_INIT_END(INIT_MODULE_ID_WEB),
 
 	//APP MODULE
-	MODULE_INIT_BEGIN(DP_INIT_MODULE_ID_APP, "AppModule", FUNCTION_ON),
-		OBJECT_INIT(DP_APP_MODULE_OBJ_AV, "AppObjAV", FUNCTION_ON, 100, 100, 100, 100),
-		OBJECT_INIT(DP_APP_MODULE_OBJ_IPS, "AppObjIPS", FUNCTION_ON, 100, 100, 100, 100),
-		OBJECT_INIT(DP_APP_MODULE_OBJ_SAAE, "AppObjSAAE", FUNCTION_ON, 100, 100, 100, 100),
-	MODULE_INIT_END(DP_INIT_MODULE_ID_APP),
+	MODULE_INIT_BEGIN(INIT_MODULE_ID_APP, "AppModule", FUNCTION_ON),
+		OBJECT_INIT(APP_MODULE_OBJ_AV, "AppObjAV", FUNCTION_ON, 100, 100, 100, 100),
+		OBJECT_INIT(APP_MODULE_OBJ_IPS, "AppObjIPS", FUNCTION_ON, 100, 100, 100, 100),
+		OBJECT_INIT(APP_MODULE_OBJ_SAAE, "AppObjSAAE", FUNCTION_ON, 100, 100, 100, 100),
+	MODULE_INIT_END(INIT_MODULE_ID_APP),
 	
 	//DEVICE MODULE
-	MODULE_INIT_BEGIN(DP_INIT_MODULE_ID_DEVICE, "DeviceModule", FUNCTION_ON),
-		OBJECT_INIT(DP_DEV_MODULE_OBJ_DEVICE, "DeviceObjDev", FUNCTION_ON, 1024, 2048, 4096, 1024),
-	MODULE_INIT_END(DP_INIT_MODULE_ID_DEVICE),
+	MODULE_INIT_BEGIN(INIT_MODULE_ID_DEVICE, "DeviceModule", FUNCTION_ON),
+		OBJECT_INIT(DEV_MODULE_OBJ_DEVICE, "DeviceObjDev", FUNCTION_ON, 1024, 2048, 4096, 1024),
+	MODULE_INIT_END(INIT_MODULE_ID_DEVICE),
 
 	//CONNECT TRACK MODULE
-	MODULE_INIT_BEGIN(DP_INIT_MODULE_ID_CONNTRACK, "ConntrackModule", FUNCTION_ON),
-		OBJECT_INIT(DP_CT_MODULE_OBJ_HASHNUM, "ConntrackObjHashSpec", FUNCTION_ON, 40960, 81920, 102400, 102400),
-		OBJECT_INIT(DP_CT_MODULE_OBJ_RESERVE_CT, "ConntrackObjRsvCT", FUNCTION_ON, 40960, 81920, 102400, 102400),
-	MODULE_INIT_END( DP_INIT_MODULE_ID_CONNTRACK)
+	MODULE_INIT_BEGIN(INIT_MODULE_ID_CONNTRACK, "ConntrackModule", FUNCTION_ON),
+		OBJECT_INIT(CT_MODULE_OBJ_HASHNUM, "ConntrackObjHashSpec", FUNCTION_ON, 40960, 81920, 102400, 102400),
+		OBJECT_INIT(CT_MODULE_OBJ_RESERVE_CT, "ConntrackObjRsvCT", FUNCTION_ON, 40960, 81920, 102400, 102400),
+	MODULE_INIT_END( INIT_MODULE_ID_CONNTRACK)
 };
 
 #define IS_OBJ_SPEC_VALUE_VALID(value) ((value >= 1024) && (value <= 204800))
 
 #if 0
-struct dpInitModule g_dp_init_module[DP_INIT_MODULE_MAX] = {
-	[DP_INIT_MODULE_ID_APP] = 
+struct dpInitModule g_dp_init_module[INIT_MODULE_MAX] = {
+	[INIT_MODULE_ID_APP] = 
 	{
 		.ModuleName = "AppModule",
 		.ModuleSwitch = SWITCH_ON,
-		.dpModuleObj[DP_APP_MODULE_OBJ_AV] = 
+		.dpModuleObj[APP_MODULE_OBJ_AV] = 
 		{
 			.ObjectName = "AppObjAV",
 			.ObjectSwitch = SWITCH_ON,
 			.ObjectValue = 0,
 		},
-		.dpModuleObj[DP_APP_MODULE_OBJ_IPS] = 
+		.dpModuleObj[APP_MODULE_OBJ_IPS] = 
 		{
 			.ObjectName = "AppObjIPS",
 			.ObjectSwitch = SWITCH_ON,
 			.ObjectValue = 0,
 		},
-		.dpModuleObj[DP_APP_MODULE_OBJ_SAAE] = 
+		.dpModuleObj[APP_MODULE_OBJ_SAAE] = 
 		{
 			.ObjectName = "AppObjSAAE",
 			.ObjectSwitch = SWITCH_ON,
 			.ObjectValue = 0,
 		},
 	},
-	[DP_INIT_MODULE_ID_DEVICE] = 
+	[INIT_MODULE_ID_DEVICE] = 
 	{
 		.ModuleName = "DeviceModule",
 		.ModuleSwitch = SWITCH_ON,
-		.dpModuleObj[DP_DEV_MODULE_OBJ_DEVICE] = 
+		.dpModuleObj[DEV_MODULE_OBJ_DEVICE] = 
 		{
 			.ObjectName = "DeviceObjDev",
 			.ObjectSwitch = SWITCH_ON,
 			.ObjectValue = 1024,
 		},
 	},
-	[DP_INIT_MODULE_ID_CONNTRACK] = 
+	[INIT_MODULE_ID_CONNTRACK] = 
 	{
 		.ModuleName = "ConntrackModule",
 		.ModuleSwitch = SWITCH_ON,
-		.dpModuleObj[DP_CT_MODULE_OBJ_STATISTIC] = 
+		.dpModuleObj[CT_MODULE_OBJ_STATISTIC] = 
 		{
 			.ObjectName = "ConntrackObjStatis",
 			.ObjectSwitch = SWITCH_ON,
 			.ObjectValue = 10,
 		},
-		.dpModuleObj[DP_CT_MODULE_OBJ_EXCEPTION_CONN] = 
+		.dpModuleObj[CT_MODULE_OBJ_EXCEPTION_CONN] = 
 		{
 			.ObjectName = "ConntrackObjExcon",
 			.ObjectSwitch = SWITCH_ON,
 			.ObjectValue = 10,
 		},
-		.dpModuleObj[DP_CT_MODULE_OBJ_NAT] = 
+		.dpModuleObj[CT_MODULE_OBJ_NAT] = 
 		{
 			.ObjectName = "ConntrackObjNat",
 			.ObjectSwitch = SWITCH_ON,
@@ -328,7 +335,7 @@ int get_dp_module_id_by_module_name(char * appModuleName)
 {
 	int i = 0; 
 	
-	for (i = 0; i < DP_INIT_MODULE_MAX; i++) {
+	for (i = 0; i < INIT_MODULE_MAX; i++) {
 		if (!strcmp(appModuleName, g_dp_init_module[i].ModuleName))
 			return i;
 	}	
@@ -341,7 +348,7 @@ int get_dp_object_id_by_obj_name(char * objName, int ModuleIndex)
 {
 	int i = 0; 
 	
-	for (i = 0; i < DP_MODULE_MAX_OBJECT_NUM; i++) {
+	for (i = 0; i < MODULE_MAX_OBJECT_NUM; i++) {
 		if (!strcmp(objName, g_dp_init_module[ModuleIndex].dpModuleObj[i].ObjectName))
 			return i;
 	}	
