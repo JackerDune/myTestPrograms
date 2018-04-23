@@ -12,8 +12,7 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <stdio.h>
-#include <readline/readline.h>
-#include <readline/history.h>
+
 #define MAC2STR(ch) (isdigit(ch) ? (ch) : toupper(ch + 4))
 #define SUNYA_SERIAL_LEN 29
 
@@ -263,8 +262,12 @@ static int sunya_serial_regenerate (const char *serno)
 	char tmp_serial[32] = {0};
 	u_int8_t hd[6] = {0x00,0x01,0x02,0x03,0x04,0x05};
 	FILE *fp = NULL; 
-	char Buff[64] = {0};
-
+	FILE *fpstore = NULL; 
+	char Buff[32] = {0};
+	char macBuff[32] = {0};
+	char writeBuff[128] = {0};
+	int writenumber = 0;
+	int validMacNumber = 0;
 
 	fp =fopen(MACLISTFILE, "r");
 	if (fp == NULL) {
@@ -272,13 +275,22 @@ static int sunya_serial_regenerate (const char *serno)
 		return -1;
 	}
 	
-    while(fgets(Buff, 64, fp) != NULL) {
-		if(is_mac_valid(hd, Buff) == 0) {
-			/* generate new serial */
+	fpstore =fopen(MACSNSTOREFILE, "w+");
+	if (fpstore == NULL) {
+		printf("open %s failed!\n", MACSNSTOREFILE);
+		return -1;
+	}
+
+	writenumber = sprintf(writeBuff, "MAC,SN\n");
+	fwrite(writeBuff, 1, writenumber, fpstore);
+    while(fgets(Buff, 1024, fp) != NULL) {
+		memcpy(macBuff, Buff, 17);
+		if(is_mac_valid(hd, macBuff) == 0) {
+			memset(tmp_serial, 0, 32);
+			/* generate new serial */	
 			memcpy(tmp_serial, serno, 4);
 			memcpy(tmp_serial+4, serno+5, 5);
 			memcpy(tmp_serial+9, serno+11, 5);
-
 
 			/* store part of mgt's mac address */
 			snprintf(mgt_mac, sizeof(mgt_mac) - 1, "%02X%02X%02X%02X",
@@ -297,13 +309,17 @@ static int sunya_serial_regenerate (const char *serno)
 
 			/* calc crc */
 			calc_crc(tmp_serial);
-
+			writenumber = sprintf(writeBuff, "%s,%s\n", macBuff, tmp_serial);
+			fwrite(writeBuff, 1, writenumber, fpstore);
+			validMacNumber++;
 			printf("mac address : %02x:%02x:%02x:%02x:%02x:%02x, serial number: %s\n", 
 					hd[0],hd[1],hd[2],hd[3],hd[4],hd[5],tmp_serial);
 		}
 	}
 
 	fclose(fp);
+	fclose(fpstore);
+	printf("total %d valid mac address, serial number is generated in file %s\n", validMacNumber, MACSNSTOREFILE);
 	return 0;
 }
 
@@ -361,7 +377,7 @@ int main(int argc, char **argv)
 {
 	char serial[1024];
 	int n  = 0;
-
+	
 	printf("please input general serial number!\n");
 	n = scanf("%s", &serial);
 	if (serial == NULL) {
@@ -370,6 +386,5 @@ int main(int argc, char **argv)
 	}
 
 	sunya_serial_check(serial);		
-
 	return 0;
 }
