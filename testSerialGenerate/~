@@ -1,0 +1,495 @@
+#include <stdio.h>
+#include <memory.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/vfs.h>
+#include <sys/sysinfo.h>
+
+typedef int (*mp_check_func)(int , char*);
+struct wlan_mp_element{
+	int element_colum_id;
+	int element_type;
+	mp_check_func mp_check_2p4g;
+	mp_check_func mp_check_5g;};
+
+enum {
+	MP_CHECK_TYPE_WLAN_MODE = 1,
+	MP_CHECK_TYPE_ESSID,
+	MP_CHECK_TYPE_FREQUENCY,
+	MP_CHECK_TYPE_RATE,
+	MP_CHECK_TYPE_TX_POWER
+};
+#define MP_RET_OK 0
+#define MP_RET_FAILED 1
+enum {
+	MP_TEST_TYPE_2P4G,
+	MP_TEST_TYPE_5G
+};
+#define WLAN_CONFIG_FILE  "./wlanRunConfig"
+#define MP_CHECK_SSID "MPTestWifi"
+#define MP_CHECK_WLAN_MODE_2P4 "802.11ng"
+#define MP_CHECK_WLAN_MODE_5G "802.11ac"
+#define MP_CHECK_TYPE_FREQUENCY_2P4 "2.4"
+#define MP_CHECK_TYPE_FREQUENCY_5G   "5"
+#define MP_CHECK_TYPE_RATE_2P4     150
+#define MP_CHECK_TYPE_RATE_5G      700
+#define MP_CHECK_TX_POWER          20
+
+#define MP_TEST_RESULT_OUTPUT(result, type, error_string) \
+		if (type == MP_TEST_TYPE_2P4G) {\
+			if (result) {\
+				printf("2.4G wlan mp-test Result: Failed Error: %s", error_string);\
+			}\
+			else {\			
+				printf( "2.4G wlan mp-test Result: OK\n");\
+			}\
+		}\
+		else \
+		{\
+			if (result) {\
+				printf( "5G wlan mp-test Result: Failed Error: %s", error_string);\
+			}\
+			else {\			
+				printf("5G wlan mp-test Result: OK\n");\
+			}\
+		}
+
+int mp_check_function_2p4g(int check_type, char* pElement) 
+{
+	int ret = MP_RET_FAILED;
+	char acBuff[128] = {0};
+	char * pTemp = NULL;
+	char * pTemp1 = NULL;
+	char errorMessage[64] = {0};
+	int tempValue = 0;
+
+	switch (check_type) {
+		case MP_CHECK_TYPE_WLAN_MODE:
+			if (!strcmp(pElement,MP_CHECK_WLAN_MODE_2P4))
+				ret = MP_RET_OK;
+			if (ret)
+				sprintf(errorMessage, "Wlan Config mode Error!\n");
+			break;
+		case MP_CHECK_TYPE_ESSID:
+			pTemp = strstr(pElement, ":");
+			if (pTemp)	{
+				pTemp = pTemp + 2;
+				pTemp1 = (strstr(pTemp, "\""));
+				if (pTemp1) {
+					memcpy(acBuff, pTemp, pTemp1-pTemp);
+					if (!strcmp(acBuff, MP_CHECK_SSID))
+						ret = MP_RET_OK;
+				}
+			}
+
+			if (ret)	
+				sprintf(errorMessage, "SSID check ERROR!\n");
+			break;
+
+		case MP_CHECK_TYPE_FREQUENCY:
+			pTemp = strstr(pElement, ":");
+			if (pTemp)	{
+				pTemp = pTemp + 1;
+				strcpy(acBuff, pTemp);
+				if (!strncmp(acBuff, "2.4", 3))
+					ret = MP_RET_OK;
+			}
+					
+			if (ret)	
+				sprintf(errorMessage, "Wlan frequency check Error!\n");
+			break;
+
+		case MP_CHECK_TYPE_RATE:
+			pTemp = strstr(pElement, ":");
+			if (pTemp)	{
+				pTemp = pTemp + 1;
+				strcpy(acBuff, pTemp);
+				tempValue = atoi(acBuff);	
+				if (tempValue >= MP_CHECK_TYPE_RATE_2P4)
+					ret = MP_RET_OK;
+			}
+
+			if (ret)	
+				sprintf(errorMessage, "Wlan rate check Error!\n");
+			break;
+		case MP_CHECK_TYPE_TX_POWER:
+			pTemp = strstr(pElement, ":");
+			if (pTemp)	{
+				pTemp = pTemp + 1;
+				strcpy(acBuff, pTemp);
+				tempValue = atoi(acBuff);	
+				if (tempValue >= MP_CHECK_TX_POWER)
+					ret = MP_RET_OK;
+			}
+
+			if (ret)	
+				sprintf(errorMessage, "Wlan tx power check Error!\n");
+			break;
+
+		default:
+			break;
+	}	
+	
+	if (ret)
+		MP_TEST_RESULT_OUTPUT(ret, MP_TEST_TYPE_2P4G, errorMessage);
+	
+	return ret;
+}
+
+int mp_check_function_5g(int check_type, char* pElement) 
+{
+	int ret = MP_RET_FAILED;
+	char acBuff[128] = {0};
+	char * pTemp = NULL;
+	char * pTemp1 = NULL;
+	char errorMessage[64] = {0};
+	int tempValue = 0;
+
+	switch (check_type) {
+		case MP_CHECK_TYPE_WLAN_MODE:
+			if (!strcmp(pElement,MP_CHECK_WLAN_MODE_5G))
+				ret = MP_RET_OK;
+			if (ret)
+				sprintf(errorMessage, "Wlan Config mode Error!\n");
+			break;
+		case MP_CHECK_TYPE_ESSID:
+			pTemp = strstr(pElement, ":");
+			if (pTemp)	{
+				pTemp = pTemp + 2;
+				pTemp1 = (strstr(pTemp, "\""));
+				if (pTemp1) {
+					memcpy(acBuff, pTemp, pTemp1-pTemp);
+					if (!strcmp(acBuff, MP_CHECK_SSID))
+						ret = MP_RET_OK;
+				}
+			}
+
+			if (ret)	
+				sprintf(errorMessage, "SSID check ERROR!\n");
+			break;
+
+		case MP_CHECK_TYPE_FREQUENCY:
+			pTemp = strstr(pElement, ":");
+			if (pTemp)	{
+				pTemp = pTemp + 1;
+				strcpy(acBuff, pTemp);
+				if (!strncmp(acBuff, "5.", 2))
+					ret = MP_RET_OK;
+			}
+					
+			if (ret)	
+				sprintf(errorMessage, "Wlan frequency check Error!\n");
+			break;
+
+		case MP_CHECK_TYPE_RATE:
+			pTemp = strstr(pElement, ":");
+			if (pTemp)	{
+				pTemp = pTemp + 1;
+				strcpy(acBuff, pTemp);
+				tempValue = atoi(acBuff);	
+				if (tempValue >= MP_CHECK_TYPE_RATE_5G)
+					ret = MP_RET_OK;
+			}
+
+			if (ret)	
+				sprintf(errorMessage, "Wlan rate check Error!\n");
+			break;
+		case MP_CHECK_TYPE_TX_POWER:
+			pTemp = strstr(pElement, ":");
+			if (pTemp)	{
+				pTemp = pTemp + 1;
+				strcpy(acBuff, pTemp);
+				tempValue = atoi(acBuff);	
+				if (tempValue >= MP_CHECK_TX_POWER)
+					ret = MP_RET_OK;
+			}
+
+			if (ret)	
+				sprintf(errorMessage, "Wlan tx power check Error!\n");
+			break;
+
+		default:
+			break;
+	}	
+	
+	if (ret)
+		MP_TEST_RESULT_OUTPUT(ret, MP_TEST_TYPE_5G, errorMessage);
+	
+	return ret;
+}
+
+struct wlan_mp_element g_wlan_mp_element[][4] = {
+	{
+		{
+			3,//802.11ng
+			MP_CHECK_TYPE_WLAN_MODE,
+			mp_check_function_2p4g,
+			mp_check_function_5g
+		},
+		{
+			4,//ESSID:"xxx"
+			MP_CHECK_TYPE_ESSID,
+			mp_check_function_2p4g,
+			mp_check_function_5g
+		},
+		{0,0, NULL, NULL},
+		{0,0, NULL, NULL}
+	},//line 0
+	{
+		{
+			2,//Frequency:2.437 GHz
+			MP_CHECK_TYPE_FREQUENCY,
+			mp_check_function_2p4g,
+			mp_check_function_5g
+		},
+		{0,0, NULL, NULL},
+		{0,0, NULL, NULL},
+		{0,0, NULL, NULL}
+	},//line 1
+	{
+		{
+			2,//Rate:156
+			MP_CHECK_TYPE_RATE,
+			mp_check_function_2p4g,
+			mp_check_function_5g
+		},
+		{
+			4,//Tx-Power:24
+			MP_CHECK_TYPE_TX_POWER,
+			mp_check_function_2p4g,
+			mp_check_function_5g
+		},
+		{0,0, NULL, NULL},
+		{0,0, NULL, NULL},
+	}//line 3
+};
+
+char *wlan_get_element_from_buffer(int iNumber, char *buf)
+{
+    int current_pos = 0;
+    int current_element_number = 0;
+    static char buffer[128] = {0};
+    int elementLen = 0;
+    
+    while(buf[current_pos] != '\0') {
+        if(isspace(buf[current_pos])) {
+            while(isspace(buf[current_pos]))
+                current_pos += 1;
+        }
+        else {
+            current_element_number++;
+            if (current_element_number == iNumber) {
+                memset(buffer, 0, 128);
+                while(!isspace(buf[current_pos+elementLen]))
+                    elementLen += 1;
+
+                memcpy(buffer, &buf[current_pos], elementLen);
+
+                return &buffer[0];
+            }    
+
+            while(!isspace(buf[current_pos]))
+                current_pos += 1;
+        }
+    }
+
+    return NULL;
+}
+
+int wlan_mp_test_from_runconfig_file(int type)
+{
+	FILE *fp = NULL;
+    char buf[1024] = {0};
+    char *pElement = NULL;
+	char file_path[32] = {0};
+	int iLine = 0;
+	int iColum = 0;
+	int mp_check_line_num = 0;
+	int ret = 0;
+
+	if (type == MP_TEST_TYPE_2P4G)
+		sprintf(file_path, WLAN_CONFIG_FILE);
+    else
+		sprintf(file_path, "wlanRunConfig5G");
+	fp = fopen(file_path, "r");
+    if (NULL == fp) {
+        printf("open %s failed !\n", file_path);    
+        return -1;
+    }
+	
+	mp_check_line_num = sizeof(g_wlan_mp_element) / (sizeof(struct wlan_mp_element) * 4);
+	//printf("mp_check_line_num = %d\n", mp_check_line_num);
+	for (iLine = 0; iLine < mp_check_line_num; iLine++) {	
+		if(fgets(buf, 1024, fp) != NULL){
+			for (iColum = 0; iColum < 4; iColum++) {
+				if (g_wlan_mp_element[iLine][iColum].element_colum_id != 0) {
+					pElement = wlan_get_element_from_buffer(g_wlan_mp_element[iLine][iColum].element_colum_id, buf);	
+					//printf("buf: %s, pElement: %s\n", buf, pElement);
+					if (type == MP_TEST_TYPE_2P4G) {
+						if (g_wlan_mp_element[iLine][iColum].mp_check_2p4g){
+							ret = g_wlan_mp_element[iLine][iColum].mp_check_2p4g(g_wlan_mp_element[iLine][iColum].element_type, pElement);
+						}
+					}
+					else {
+						if (g_wlan_mp_element[iLine][iColum].mp_check_5g) {
+							ret = g_wlan_mp_element[iLine][iColum].mp_check_5g(g_wlan_mp_element[iLine][iColum].element_type, pElement);
+						}
+					}
+				
+#if 0	
+					if (ret != MP_RET_OK) {
+						fclose(fp);
+						return ret;
+					}
+#endif
+				}	
+			}
+		}	
+	}
+   
+	fclose(fp);	
+    return 0;
+}
+
+void get_humen_mem_info(long long meminfo, char *memstring) 
+{
+	long long tmpMem = 0;
+	char unit[8] = {0};
+
+	if (meminfo >= 1024*1024*1024) {
+		tmpMem = meminfo / 1024 / 1024 / 1024;
+		sprintf(unit, "GB");
+	}
+	else if (meminfo >= 1024*1024) {
+		tmpMem = meminfo / 1024 / 1024;
+		sprintf(unit, "MB");
+	}
+	else if (meminfo >= 1024) {
+		tmpMem = meminfo / 1024;
+		sprintf(unit, "KB");
+	}
+	else { 
+		tmpMem = meminfo;
+		sprintf(unit, "B");
+	}
+
+	sprintf(memstring, "%llu%s", tmpMem, unit);	
+}
+
+int get_system_tf_free(char *path, double *free)
+{
+	struct statfs diskInfo;
+	unsigned long long totalBlocks;
+	unsigned long long freeDisk;
+	char meminfo[128] = {0};
+
+	if(free == NULL)
+		return -1;
+	
+	printf("path is : %s \n", path);
+	statfs(path,&diskInfo);
+
+	totalBlocks = diskInfo.f_bsize;
+	freeDisk= diskInfo.f_bfree*totalBlocks;
+	*free = freeDisk;
+	printf ("freeDisk is %llu:", freeDisk);
+	get_humen_mem_info(freeDisk, meminfo);
+	printf("%s\n", meminfo);
+	return 0;
+}
+
+void getFreeRam(void)
+{
+	struct sysinfo info;
+	memset(&info, 0 ,sizeof(struct sysinfo));
+	char meminfo[128] = {0};
+	
+	sysinfo(&info);	
+
+	printf("free mem: %d:", info.freeram);
+
+	get_humen_mem_info((long long)info.freeram, meminfo);
+	printf("%s\n", meminfo);
+}
+
+#define STORE_FILE_PATH "./storeFile"
+char g_store_path[128] = {0};
+
+char *module_store_path_file_get(void)
+{
+	FILE *fp = NULL;
+	char Buff[128] = {0};
+
+	if (access(STORE_FILE_PATH, F_OK) != 0)
+	{
+		fp = fopen(STORE_FILE_PATH, "r");
+		if (fp == NULL) {
+			printf("open file %s error!\n", STORE_FILE_PATH);
+			return NULL;
+		}
+		else {
+			fread(Buff, 1, sizeof(Buff)-1, fp);
+			fclose(fp);
+			strcpy(g_store_path, Buff);
+			printf("%s, %d, buff: %s\n", __FUNCTION__, __LINE__, g_store_path);
+			return g_store_path;
+		}	
+	}
+	else  //has stored before
+		return NULL;	
+}
+
+void module_store_path_delete(void)
+{
+	if (access(STORE_FILE_PATH, F_OK) == 0) {
+		remove(STORE_FILE_PATH);
+	}
+}
+
+int module_store_path_file_save(char *string)
+{
+	FILE *fp = NULL;
+	char Buff[128] = {0};
+
+	if (access(STORE_FILE_PATH, F_OK) == 0)
+	{
+		fp = fopen(STORE_FILE_PATH, "w+");
+		if (fp == NULL) {
+			printf("open file %s error, %s!\n", STORE_FILE_PATH, strerror(errno));
+			return -1;
+		}
+		else {
+			snprintf(Buff, string, (sizeof(Buff)-1));		
+			fwrite(Buff, 1, strlen(Buff), fp);
+			fclose(fp);
+		}	
+	}
+	else  //has stored before
+		return 0;	
+}
+
+int main(int argc, char **argv)
+{
+#if 0
+	double free;
+	char *path = NULL;
+	wlan_mp_test_from_runconfig_file(MP_TEST_TYPE_2P4G);
+	wlan_mp_test_from_runconfig_file(MP_TEST_TYPE_5G);
+	
+	if (argc < 2) {
+		printf("input error!\n");
+		return -1;
+	}
+	path = argv[1];
+	if (path)  
+		get_system_tf_free (path, &free);
+
+	getFreeRam();
+#endif
+	module_store_path_file_save("test/string/test1111");
+	module_store_path_file_get();
+	module_store_path_delete();
+	return 0;
+}

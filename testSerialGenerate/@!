@@ -1,0 +1,214 @@
+#include <stdio.h>
+#include <memory.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/stat.h>
+#include <fcntl.h>
+#include <sys/vfs.h>
+#include <sys/sysinfo.h>
+#include <errno.h>
+#include <netdb.h>
+#include <sys/socket.h>
+#include <netinet/in.h>
+#include <arpa/inet.h>
+
+#define MAC2STR(ch) (isdigit(ch) ? (ch) : toupper(ch + 4))
+#define SUNYA_SERIAL_LEN 29
+static char mgt_mac[32] = {};
+static char convert_result_array[10][10] = {};
+static int j = 0;
+static char *num2str(unsigned int num, unsigned int len)
+{
+	char *convert_result;
+	int result = 0, i =  3;
+
+	if (len > 4 || num >= pow(36, len))
+	  return "ZZZZ";
+
+	if (j > 9)
+	  j = 0;
+
+	convert_result = convert_result_array[j];
+	memset(convert_result, '0', 5);
+
+	do
+	{
+		result = num % 36;
+		num /= 36;
+		convert_result[i--] = result < 10 ? '0' + result : 'A' + result - 10;
+	}while (num >= 36);
+
+	if (num)
+	  convert_result[i] = num < 10 ? '0' + num : 'A' + num - 10;
+
+	if (len == 4)
+	  convert_result[4] = 0;
+	else
+	  for (i = 0; i < 4 - len; i++)
+	  {
+		  if (convert_result[0] == '0')
+		  {
+			  convert_result[0] = convert_result[1];
+			  convert_result[1] = convert_result[2];
+			  convert_result[2] = convert_result[3];
+			  convert_result[3] = 0;
+		  }
+		  else
+			break;
+	  }
+
+	j++;
+
+	return convert_result;
+}
+
+static int calc_crc(char *input_str)
+{
+	char *p;
+	char tmp_buf[32] = {};
+	unsigned long long cal_crc = 12315;
+	int i = 0;
+
+	if(!input_str || strlen(input_str) != 24){
+		return -1;
+	}
+
+	p = input_str;
+
+	while (*p)
+	{
+		if (isdigit(*p))
+		  cal_crc += cal_crc ^ (*p - '0' + 1);
+		else if (isalpha(*p))
+		  cal_crc += cal_crc ^ (toupper(*p) - 'A' + 11);
+		else if (*p != '-') {
+			return -1;
+		}
+
+		tmp_buf[i++] = *p;
+		if (*(p+1) == '-' || *(p+1) == 0) {
+			tmp_buf[i++] = *num2str(cal_crc % 36, 1);
+			cal_crc += cal_crc ^ ((cal_crc % 36) + 1);
+		}
+		p++;
+	}
+
+	memcpy(input_str, tmp_buf, sizeof(tmp_buf));
+	return 0;
+}
+
+static int serial_value_calc(char p, unsigned long long crc)
+{
+	int value;
+
+	if(isdigit(p))
+	  value = p - '0';
+	else if (isalpha(p))
+	  value = toupper(p) - 'A' + 10;
+	else
+	  return -1;
+
+	return value != crc % 36;
+}
+
+static int sunya_serial_regenerate (const char *serno)
+{
+	char tmp_serial[32] = {0};
+	u_int8_t hd[6] = {0x00,0x01,0x02,0x03,0x04,0x05};
+
+	/* generate new serial */
+	memcpy(tmp_serial, serno, 4);
+	memcpy(tmp_serial+4, serno+5, 5);
+	memcpy(tmp_serial+9, serno+11, 5);
+
+	/* store part of mgt's mac address */
+	snprintf(mgt_mac, sizeof(mgt_mac) - 1, "%02X%02X%02X%02X",
+				hd[2], hd[3], hd[4], hd[5]);
+	tmp_serial[10] = '2';
+	tmp_serial[14] = '-';
+	tmp_serial[15] = MAC2STR(mgt_mac[0]);
+	tmp_serial[16] = MAC2STR(mgt_mac[1]);
+	tmp_serial[17] = MAC2STR(mgt_mac[2]);
+	tmp_serial[18] = MAC2STR(mgt_mac[3]);
+	tmp_serial[19] = '-';
+	tmp_serial[20] = MAC2STR(mgt_mac[4]);
+	tmp_serial[21] = MAC2STR(mgt_mac[5]);
+	tmp_serial[22] = MAC2STR(mgt_mac[6]);
+	tmp_serial[23] = MAC2STR(mgt_mac[7]);
+
+	/* calc crc */
+	calc_crc(tmp_serial);
+
+	printf("mac address : %02x:%02x:%02x:%02x:%02x:%02x, serial number: %s\n", 
+			hd[0],hd[1],hd[2],hd[3],hd[4],hd[5],tmp_serial);
+	return 0;
+}
+
+int sunya_serial_check(char *input_str)
+{
+	char *p;
+	unsigned long long cal_crc = 12315;
+	int i = 0;
+
+	if(!input_str)
+	  return -1;
+
+
+	p = input_str;
+	while ((p < input_str + SUNYA_SERIAL_LEN) && *p) {
+		if (isdigit(*p)) {
+			i++;
+			if (!(i % 5) && serial_value_calc(*p, cal_crc))
+			  return -1;
+
+			cal_crc += cal_crc ^ (*p - '0' + 1);
+		}
+		else if (isalpha(*p)) {
+			i++;
+			if (!(i % 5) && serial_value_calc(*p, cal_crc))
+			  return -1;
+
+			cal_crc += cal_crc ^ (toupper(*p) - 'A' + 11);
+		}
+		else if (*p != '-' || (i % 5))
+		  return -1;
+
+		p++;
+	}
+
+	if(i != 25) {
+		printf("invalid serial number !\n");
+	   	return -1;
+
+	}
+
+	if (input_str[12] == '3') {
+		printf("Generating serial number, please wait.\n");
+		sunya_serial_regenerate(input_str);
+	}else {
+		printf("invalid serial number !\n");
+	   	return -1;
+	}
+	
+	return 0;
+}
+
+int main(int argc, char **argv)
+{
+	char *serial = NULL;
+
+	printf("please input general serial number!\n");
+	serial = readline(NULL);
+	if (serial == NULL) {
+		printf("Invalid Serial Number!\n");
+		return -1;
+	}
+
+	sunya_serial_check(serial);		
+	if (serial != NULL){
+		free(serial);
+		serial = NULL;
+	}
+
+	return 0;
+}
