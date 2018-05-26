@@ -400,18 +400,18 @@ def editRestfulApiSencondTime( infile):
 		number = 0
 		for line in lines:
 			if '\"' in line:
-				if line.find(':') != -1 and (line.find('[') == -1 and line.find('{') == -1):
-					if lines[number+1].find("]") == -1 and lines[number+1].find("}") == -1:
+				if line.find(':') != -1 and ((line.find('[') == -1 and line.find('{') == -1) or (line.find("]") != -1 and line.find("[") != -1) or (line.find("{") != -1 and line.find("}") != -1)):
+					if ((lines[number+1].find("]") == -1 and lines[number+1].find("}") == -1) or (lines[number+1].find("]") != -1 and lines[number+1].find("[") != -1) or (lines[number+1].find("{") != -1 and lines[number+1].find("}") != -1)):
 						#print 'here is the line need , end'
 						#print line
 						newNoSpaceLine = line.rstrip()
 						if newNoSpaceLine.endswith (','):
-							print('second end with ,')
+							#print('second end with ,')
 							print newNoSpaceLine
 						else:
 							print('second not end with ,')
-							print newNoSpaceLine
 							newline = newNoSpaceLine + ',\n'
+							print newline
 							lines[number] = newline
 							#print 'here' + lines[number]
 				else:
