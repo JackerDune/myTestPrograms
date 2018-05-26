@@ -356,7 +356,7 @@ def dos_to_unix(fname):
 		fobj.truncate()  
 		fobj.write(data)  
 
-def editRestfulApiPhpFile( infile ):   #以rb+方式打开再写入某些情况下会在文件末尾复制倒数三行写到文件尾部，导致多出三行冗余代码，需要以读写的方式打开，然后以w方式写入规避，可能为python本身的bug导致
+def editRestfulApiPhpFile( infile ):   #以rb+方式打开再写入某些情况下会在文件末尾复制倒数三行写到文件尾部，导致多出三行冗余代码，需要以读写的方式打开，然后以w方式写入规避，可能为python本身的bug导致,或者文件整体长度变化导致？？？
 	#"从文件中得到需要分析的字串"
 	print '正在修改文件' +  infile
 	with open(infile,'rb+') as f :
@@ -369,19 +369,24 @@ def editRestfulApiPhpFile( infile ):   #以rb+方式打开再写入某些情况�
 					print('we will replace ,\" to \"')
 					newline = lines[number].replace(',\"', '\"')
 					lines[number] = newline
-					if lines[number+1].find("]") == -1 and lines[number+1].find("}") == -1:
-						if line.endswith (',\n'):
-							print('end with ,')
-						else:
-							#print('not end with ,')
-							newline = lines[number].replace('\n', ',\n')
-							lines[number] = newline
-							#print 'here' + lines[number]
+					# if lines[number+1].find("]") == -1 and lines[number+1].find("}") == -1:
+						# newNoSpaceLine = line.rstrip('a b')
+						# if newNoSpaceLine.endswith (',\n'):
+							# print('end with ,')
+							# print newNoSpaceLine
+						# else:
+							# #print('not end with ,')
+							# newline = newNoSpaceLine.replace('\n', ',\n')
+							# lines[number] = newline
+							# #print 'here' + lines[number]
 				if (line.find('/v1.0') != -1):
 					print ('we will replace /v1.0 to \' \'')
 					newline = line.replace('/v1.0', ' ')
 					lines[number] = newline
 					#print lines[number]
+			if '@apiSuccess' in line:
+				newline = line.replace(',', ' ', 1)
+				lines[number] = newline
 			number = number+1
 	with open(infile,'w') as f:
 		print 'number is' + bytes(number)
@@ -398,13 +403,17 @@ def editRestfulApiSencondTime( infile):
 				if line.find(':') != -1 and (line.find('[') == -1 and line.find('{') == -1):
 					if lines[number+1].find("]") == -1 and lines[number+1].find("}") == -1:
 						#print 'here is the line need , end'
-						print line
-						if line.endswith (',\n'):
-							print('end with ,')
+						#print line
+						newNoSpaceLine = line.rstrip()
+						if newNoSpaceLine.endswith (','):
+							print('second end with ,')
+							print newNoSpaceLine
 						else:
-							#print('not end with ,')
-							newline = lines[number].replace('\n', ',\n')
+							print('second not end with ,')
+							print newNoSpaceLine
+							newline = newNoSpaceLine + ',\n'
 							lines[number] = newline
+							#print 'here' + lines[number]
 				else:
 					pass
 					#print 'next line'
@@ -412,15 +421,7 @@ def editRestfulApiSencondTime( infile):
 	
 	with open(infile,'w') as f:
 			print 'number is' + bytes(number)
-			#f.seek(0)
-			#for line in lines:
-			#	print line
-			#	f.write(line)
 			f.writelines(lines)
-			#print 'file list *****************************'
-			#print lines
-		#f.seek(0)
-		#f.writelines(lines)
 	print '完成文件' +  infile + '的修改'
 	return ''
 	
@@ -477,9 +478,9 @@ print phplist
 for phpfile in phplist:
 	if phpfile.endswith('.php'):
 		print phpfile
-		dos_to_unix(phpfile)
-		editRestfulApiPhpFile(phpfile)
-		editRestfulApiSencondTime(phpfile)
+		dos_to_unix(sys.argv[1] + '/' + phpfile)
+		editRestfulApiPhpFile(sys.argv[1] + '/' + phpfile)
+		editRestfulApiSencondTime(sys.argv[1] + '/' + phpfile)
 		
 #shutil.copyfile('./DnsZoneController.php.bak', './DnsZoneController.php')
 
