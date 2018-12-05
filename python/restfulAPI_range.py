@@ -13,7 +13,7 @@ rootdir = os.getcwd()
 
 
 def getModuleNameFromLines(lines):
-    print(lines)
+#    print(lines)
     retString = lines.split("(")[1].split(",")[0]   
     return retString
 
@@ -100,13 +100,14 @@ def getxmlinfofromcfile(infile):
 			pass
 		if 'PARSE_XML_' in lines:
                 	module = getModuleNameFromLines(lines)
-			print(module)
+			#print(module)
             		if module != lastModule:
                 		tmpfd.write('//Module Name****' + module + '****Range Check Element and Function BEGIN:' + "\n")
                 		lastModule = module
             		tmpfd.write(lines)
 		elif 'element_node_parameter' in lines:
-		        linelist.append(lines)	
+                        linenumber=0
+                        linelist.append(lines)	
                         while True:
                             linenumber = linenumber+1
                             if linenumber == 5:
@@ -115,6 +116,7 @@ def getxmlinfofromcfile(infile):
                                 break
                                 pass
                             if '};' in lines:
+                                linelist = []
                                 break
 
                             lines = infd.readline()
@@ -123,6 +125,7 @@ def getxmlinfofromcfile(infile):
                                 write_flag = 1
                                 for member in linelist: 
                                     tmpfd.write(member)
+                                    print(member)
                                 linelist = [] #free linelist
                                 break
 		elif write_flag == 1:
