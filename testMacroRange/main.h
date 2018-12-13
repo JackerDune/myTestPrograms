@@ -30,6 +30,16 @@ int name_str_check(const char *name, int len)
 	return 0;
 }
 
+int ip_address_common_check(char *ip);
+#define CHECK_XML_IP(module, name, type)  \
+        static inline int module##_xml_check_range_##name(void *ptr)\
+           {\
+				   if (ip_address_common_check((char *)(((type*)ptr)->name)) < 0) \
+						return 250;\
+				   else \
+						return 0;\
+           }
+
 /*
  *param @str: buffer to be checked
  *param @str_len:length of str
