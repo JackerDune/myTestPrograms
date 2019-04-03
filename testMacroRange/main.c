@@ -10,7 +10,7 @@ struct test {
 	char ipaddr[20];
 };
 
-CHECK_XML_INT_INIT(test, itwo, struct test, 0, 10)
+CHECK_XML_INT_INIT(test, itwo, struct test, -1, 10)
 CHECK_XML_INT_INIT(test, ione, struct test, 0, 10)
 CHECK_XML_INT_INIT(test, ithree, struct test, 0, 50)
 CHECK_XML_IP(test, ipaddr, struct test)
@@ -110,7 +110,7 @@ inline int ip_address_common_check(char *ip)
 
 int main(int argc, char **argv) {
 	struct test a;
-	a.ione = 10;
+	a.ione = -1837658568;
 	a.itwo = 1;
 	a.ithree = 5;	
 	int ret = 0;
