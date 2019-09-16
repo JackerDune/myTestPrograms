@@ -1,6 +1,6 @@
-package ofctl
+package ofctl 
 
-import (
+import ( 
 	"fmt"
 	"strings"
 	"net"
@@ -62,7 +62,9 @@ const (
 	MatchFieldArpSpa
 	MatchFieldIcmpType
 	MatchFieldIcmpCode
-	
+
+	ArpOpRequest = 1	
+	ArpOpReply = 2 
 )
 
 type CommonActionType int
@@ -70,6 +72,8 @@ type ProtocolType int
 type RegFieldType int
 type RegActionType int
 type MatchFieldType int
+
+
 
 var MapProto map[ProtocolType]string = map[ProtocolType]string {ProtoIp:"ip", ProtoArp:"arp", ProtoIcmp:"icmp"}
 var MapRegField map[RegFieldType]string = map[RegFieldType]string {
@@ -83,8 +87,8 @@ var MapRegField map[RegFieldType]string = map[RegFieldType]string {
 	NXM_OF_ICMP_CODE:"NXM_OF_ICMP_CODE[]",
 	NXM_OF_ARP_SPA:"NXM_OF_ARP_SPA[]",
 	NXM_OF_ARP_TPA:"NXM_OF_ARP_TPA[]",
-	NXM_OF_ARP_SHA:"NXM_OF_ARP_SHA[]",
-	NXM_OF_ARP_THA:"NXM_OF_ARP_THA[]",
+	NXM_OF_ARP_SHA:"NXM_NX_ARP_SHA[]",
+	NXM_OF_ARP_THA:"NXM_NX_ARP_THA[]",
 	NXM_NX_TUN_IPV4_DST:"NXM_NX_TUN_IPV4_DST[]",
 	NXM_NX_TUN_IPV4_SRC:"NXM_NX_TUN_IPV4_SRC[]",
 }
@@ -233,6 +237,22 @@ func InetAtoN(ip string) int64 {
 	ret := big.NewInt(0)
 	ret.SetBytes(net.ParseIP(ip).To4())
 	return ret.Int64()
+}
+
+func InetIntToHex (IP string) string{
+	Value := InetAtoN(IP)
+	StringHex := fmt.Sprintf("0x%x", Value)
+	return StringHex
+}
+
+func MacStringToHex(Mac string) string{
+	hw,error := (net.ParseMAC(Mac))
+	if (error == nil) {
+		StringHex := fmt.Sprintf("0x%02x%02x%02x%02x%02x%02x", hw[0], hw[1], hw[2], hw[3], hw[4], hw[5])	
+		return StringHex
+	}
+
+	return ""
 }
 
 type FlowerKey interface {
